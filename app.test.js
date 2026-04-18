@@ -30,7 +30,7 @@ describe('Etihad Flight API', () => {
   test('GET /health returns healthy status', async () => {
     const res = await request(app).get('/health');
     expect(res.statusCode).toBe(200);
-    expect(res.body.status).toBe('healthy');
+    expect(res.body.status).toBe('broken');
   });
 
   test('GET /flights returns all flights', async () => {
