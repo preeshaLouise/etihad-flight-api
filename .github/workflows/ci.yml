@@ -1,0 +1,50 @@
+# Pipeline name — shows up in GitHub's Actions tab
+name: Etihad Flight API — CI Pipeline
+
+# Trigger: run this pipeline on every push to main
+# and on every pull request targeting main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    # The machine this job runs on — GitHub provides this free
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: check out your code onto the runner machine
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: install the correct Node.js version
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'        # caches node_modules between runs — faster pipeline
+
+      # Step 3: install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: run your test suite — pipeline fails here if any test fails
+      - name: Run tests
+        run: npm test
+
+      # Step 5: build the Docker image — confirms the Dockerfile is valid
+      - name: Build Docker image
+        run: docker build -t etihad-flight-api:${{ github.sha }} .
+
+      # Step 6: verify the container actually starts and /health responds
+      - name: Run container health check
+        run: |
+          docker run -d -p 3000:3000 \
+            -e REDIS_HOST=localhost \
+            --name flight-api-test \
+            etihad-flight-api:${{ github.sha }}
+          sleep 5
+          curl --fail http://localhost:3000/health
+          docker stop flight-api-test

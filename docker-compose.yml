@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+
+  # Your Node.js flight API
+  flight-api:
+    build: .                        # build from the Dockerfile in this folder
+    ports:
+      - "3000:3000"                 # expose to your machine
+    environment:
+      - REDIS_HOST=redis            # "redis" resolves to the redis container below
+      - PORT=3000
+    depends_on:
+      - redis                       # don't start until redis is up
+    networks:
+      - etihad-network
+
+  # Redis cache — using the official image, no Dockerfile needed
+  redis:
+    image: redis:7-alpine           # official image, alpine = small
+    ports:
+      - "6379:6379"                 # exposed here for debugging only
+    networks:
+      - etihad-network
+
+# The shared network both containers communicate over
+networks:
+  etihad-network:
+    driver: bridge
